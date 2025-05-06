@@ -12,21 +12,21 @@ Picard_Jar="/home/${SRV}/SNP_calling/first_part/software/picard.jar"
 Ref_Fasta="S288C_reference_plus_2u.fa"
 
 ## Create working directories ##
-#mkdir -p "${Exercise_Dir}/Variant_Calling"
-#mkdir -p "${Exercise_Dir}/reference_dir"
+mkdir -p "${Exercise_Dir}/Variant_Calling"
+mkdir -p "${Exercise_Dir}/reference_dir"
 
 ## Copy in the raw fastq ##
-#cp "${Raw_Dir}/control1_R1_sub.fastq"   "${Exercise_Dir}/Variant_Calling/"
-#cp "${Data_Dir}/3_S3_R1_001.fastq.gz"   "${Exercise_Dir}/Variant_Calling/"
+cp "${Raw_Dir}/control1_R1_sub.fastq"   "${Exercise_Dir}/Variant_Calling/"
+cp "${Data_Dir}/3_S3_R1_001.fastq.gz"   "${Exercise_Dir}/Variant_Calling/"
 
 ## Run FastQC ##
 cd "${Exercise_Dir}/Variant_Calling"
-#gzip -d 3_S3_R1_001.fastq.gz
+gzip -d 3_S3_R1_001.fastq.gz
 fastqc 3_S3_R1_001.fastq
 
 ## Build HISAT2 index ##
 cd "${Exercise_Dir}/reference_dir"
-#cp "${Ref_Src_Dir}/${Ref_Fasta}" .
+cp "${Ref_Src_Dir}/${Ref_Fasta}" .
 hisat2-build "${Ref_Fasta}" yeast
 
 ## Align ##
@@ -130,6 +130,11 @@ for SAMPLE in control1_R1 3_S3_R1_001; do
       -O ${SAMPLE}_variants_recal.vcf
 done
 
+vcftools --vcf 3_S3_R1_001_variants_recal.vcf --diff control1_R1_variants_recal.vcf --diff-site --out compared
+less compared.diff.sites_in_files | awk 'BEGIN{print "Chr\tPos\tREF\tALT"}; NR > 1{ if ($4 == 1) { print $1, $2, $5, $7} }' OFS='\t' > variants.txt
+
 ## Mental sanity ##
 echo "All steps completed."
+
+
 
