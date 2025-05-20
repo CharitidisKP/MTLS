@@ -1,0 +1,68 @@
+```{r load the libraries}
+
+library(ggtree)
+library(treeio)
+library(ggplot2)
+library(patchwork)
+
+```
+
+```{r Load the data and order the trees}
+path <- "~/MTLS/SU/Comparative_Genomics/Exercises/Practical_4/Cluster_Alignments/trees_NJ/trees_named/"
+tree_files <- list.files("~/MTLS/SU/Comparative_Genomics/Exercises/Practical_4/Cluster_Alignments/trees_NJ/trees_named",
+                         pattern = "^cluster_.*\\.nwk$")
+
+nums <- as.numeric(sub("cluster_(\\d+)_aligned\\.nwk", "\\1", tree_files))
+ord  <- order(nums)
+tree_files <- tree_files[ord]
+nums <- nums[ord]
+
+```
+
+
+```{r Tree Clusters}
+
+plots <- lapply(seq_along(tree_files), function(i) {
+  f <- tree_files[i]
+  tr <- read.tree(paste0(path, f))
+  n  <- length(tr$tip.label)
+  
+  ggtree(tr, ladderize = FALSE) + 
+    geom_tiplab(size = 3, align = TRUE) +
+    ggtitle(paste0("Cluster ", nums[i])) +
+    theme_tree2() +
+    # add margin on left for labels, top & bottom so none get cut
+    theme(
+      plot.margin = unit(c(1, 2, 0, 1), "cm")
+    ) +
+    coord_cartesian(
+      ylim = c(0.5, n + 0.5),
+      clip = "off"
+    )
+})
+
+combined <- wrap_plots(plots, ncol = 2)
+
+ggsave(filename = "Tree_Clusters.jpeg", path = "~/MTLS/SU/Comparative_Genomics/Exercises/Practical_4", plot = combined, 
+       width = 16, height = 24, dpi = 300, device = "jpeg")
+
+```
+
+```{r Consensus tree}
+
+Consensus_tree <- read.tree("~/MTLS/SU/Comparative_Genomics/Exercises/Practical_4/Cluster_Alignments/trees_NJ/trees_named/outtree")
+
+Consensus_tree_plot <- ggtree(Consensus_tree, ladderize = FALSE) +
+     geom_tiplab(size  = 3, align = TRUE, offset = 0) +
+     ggtitle("Consensus Tree from Phylip") +
+     theme_tree2() +
+     # extra right margin so long labels aren’t clipped
+     theme(plot.margin = unit(c(1, 2, 0, 1), "cm")) +
+     # extend the y-limits slightly beyond the first/last tip
+     coord_cartesian(ylim = c(0.5, 4), clip = "off")
+
+ggsave(filename = "Consensus_Tree.jpeg", path = "~/MTLS/SU/Comparative_Genomics/Exercises/Practical_4", plot = Consensus_tree_plot, 
+       width = 16, height = 10, dpi = 300, device = "jpeg")
+
+```
+
