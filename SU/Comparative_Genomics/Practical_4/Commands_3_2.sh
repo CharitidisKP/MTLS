@@ -7,10 +7,10 @@ nano rename.sed
 
 ## Insert the following into rename.sed without the coments: ##
 ## rename.sed
-#s|15\.fa_orf[^:]*:([0-9]+\.[0-9]+)|E_coli:\1|g
-#s|9\.fa_orf[^:]*:([0-9]+\.[0-9]+)|B_subtilis:\1|g
-#s|21\.fa_orf[^:]*:([0-9]+\.[0-9]+)|S_aureus:\1|g
-#s|25\.fa_orf[^:]*:([0-9]+\.[0-9]+)|L_monocytogenes:\1|g
+#s|15\.fa_orf[^:]*:([0-9]+\.[0-9]+)|C_trachomatis:\1|g
+#s|9\.fa_orf[^:]*:([0-9]+\.[0-9]+)|S_epidermidis:\1|g
+#s|21\.fa_orf[^:]*:([0-9]+\.[0-9]+)|S_pyogenes:\1|g
+#s|25\.fa_orf[^:]*:([0-9]+\.[0-9]+)|L_gelidum:\1|g
 #s|1\.fa_orf[^:]*:([0-9]+\.[0-9]+)|S_cerevisiae:\1|g
 
 cd trees_NJ
@@ -25,5 +25,5 @@ cat cluster_* > intree
 grep -v '^$' intree > intree.tmp && mv intree.tmp intree 
  
 grep -c ';' intree
-phylip consensus
+phylip consense
 
