@@ -25,7 +25,7 @@ for query_fa in "$PROTEOME_DIR"/*.pfa; do
     mkdir -p "$OUT_sub_DIR"
 
     ## Prepare output names and paths ##
-    out_tsv="$OUT_sub_DIR/${qbase}vs_${dbbase}_blast.tsv"
+    out_tsv="$OUT_sub_DIR/${qbase}_vs_${dbbase}_blast.tsv"
     ## Sanity check ##
     echo "Files $qbase vs $dbbase have been placed in: $out_tsv"
 
