@@ -1,35 +1,93 @@
-import os
+#! /usr/bin/env python3
+import os 
+from textwrap import wrap
 
-def load_fasta_sequence(path):
-    """
-    Read a FASTA file and return the concatenated sequence (uppercase, no spaces).
-    Assumes a single sequence per file.
-    """
-    seq_parts = []
-    with open(path) as fh:
-        for line in fh:
+## Parameters ##
+Dir_Path = os.path.expanduser("~/MTLS/SU/Comparative_Genomics/Fasta_Files/")
+
+Min_AA_len = 35
+Stop_Codons = {"TAA", "TAG", "TGA"}
+Start_Codon = {"ATG"}
+
+## Load the data ##
+def Load_Fasta(Path):
+    Sub_seqs = []
+    with open(Path) as current_file:
+        for line in current_file:
             if line.startswith(">"):
                 continue
-            seq_parts.append(line.strip())
-    return "".join(seq_parts).upper()
+            Sub_seqs.append(line.strip())
+    return "".join(Sub_seqs).upper()            
 
-# Directory containing FASTA files
-dir_path = os.path.expanduser("~/MTLS/SU/Comparative_Genomics/Fasta_Files/")
+## Get the reverse complement ##
+def Reverse_Comp(Seq):
+    table = str.maketrans("ACGTacgtnN", "TGCAtgcanN")
+    return Seq.translate(table)[::-1]
 
-# Dictionary to store sequences: key = filename base, value = sequence string
-seq_dict = {}
+def ORF_Sniffer(Seq, Frame, Min_len):
+    ORFs = []
+    i = Frame
+    L = len(Seq)
 
-for filename in os.listdir(dir_path):
-    if filename.endswith(".fa") or filename.endswith(".fasta"):
-        base_name, _ = os.path.splitext(filename)
-        full_path = os.path.join(dir_path, filename)
-        if os.path.isfile(full_path):
-            seq_dict[base_name] = load_fasta_sequence(full_path)
+    while i + 3 <= L:
+        codon = Seq[i:i+3]
+        if codon in Start_Codon:
+            for j in range(i, L, 3):
+                stop_codon = Seq[j:j+3]
+            if stop_codon in Stop_Codons:
+                orf_len = j + 3 - i
+                if orf_len // 3 >= Min_len:
+                    ORFs.append((i, j + 3, Seq[i:j+3]))
+                break
+        i += 3
+        return ORFs
+    
 
-# Now print each sequence length
-for key, seq in seq_dict.items():
-    print(f"{key}: {len(seq)} bases")
+def ORF_Getter(Seq, Frame, Min_Nt_len):
+    Min_Nt_len = Min_AA_len * 3
+    L = len(Seq)
+
+    ## Main strand ##
+    Forward_ORFs = []
+    for frame in (0, 1, 2): 
+        hits = ORF_Sniffer(Seq, Frame, Min_Nt_len)
+
+        for (s, e) in hits:
+            Forward_ORFs.append({
+                "Start": s, 
+                "End": e, 
+                "Strand": "Forward", 
+                "Sequence": Seq[s:e]
+            } )
+
+    ## Reverse strand ##
+    Reverse_ORFs = []
+    Rev = Reverse_Comp(Seq)
+
+    for frame in (0, 1, 2): 
+        hits = ORF_Sniffer(Rev, Frame, Min_Nt_len)
+
+        for (s_r, e_r) in hits:
+            Reverse_ORFs.append({
+                "Start": L - s_r, 
+                "End": L - e_r, 
+                "Strand": "Reverse", 
+                "Sequence": Seq[L - s_r:L - e_r]
+            } )
 
 
+def Filter_ORFs(ORF_list):
+    ORF_list_sorted = sorted(orf_list, key = lambda x: (x["end"] - x["start"]), reverse = True)
+    kept = []
 
-
+    for Current_ORF in ORF_list_sorted:
+        s_c, e_c = Current_ORF["Start"], Current_ORF["End"]
+        is_Nested = False
+        for bigger in kept: 
+            s_b, e_b = bigger["Start"], bigger["End"]
+            if (s_b <= s_c) and (e_c <= e_b): 
+                is_Nested = True
+                break 
+        if not is_Nested:
+            kept.append(Current_ORF)
+    return kept
