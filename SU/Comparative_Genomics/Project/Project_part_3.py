@@ -54,7 +54,6 @@ def ORF_Sniffer(Seq, Frame, Min_len):
 
     return ORFs
     
-
 ## Retrieve the ORF from the sequences ##
 def ORF_Getter(Seq):
     Min_Nt_len = Min_AA_len * 3
